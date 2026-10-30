@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataShield Local</title>
+<meta name="description" content="A local detection engine that stops personal data, Indian IDs, payment data and secrets from leaking into AI chats, e-mail and uploads. Runs on your own device.">
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --fg: #18202e; --muted: #5d6879; --line: #e2e6ec;
+    --accent: #2f5bd3; --accent-soft: #e9effd; --crit: #c62828; --high: #e65100; --med: #b7860b; --low: #5d6879;
+    --code: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1116; --card: #161a21; --fg: #e7eaf0; --muted: #98a2b3; --line: #29303b;
+      --accent: #7aa2ff; --accent-soft: #1b2440; --crit: #ff6b6b; --high: #ffa94d; --med: #ffd43b; --low: #98a2b3;
+      --code: #1d222b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1116; --card: #161a21; --fg: #e7eaf0; --muted: #98a2b3; --line: #29303b;
+    --accent: #7aa2ff; --accent-soft: #1b2440; --crit: #ff6b6b; --high: #ffa94d; --med: #ffd43b; --low: #98a2b3;
+    --code: #1d222b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header.hero { padding: 64px 0 40px; }
+  .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.15; margin: 8px 0 16px; letter-spacing: -.01em; }
+  .lede { font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 0 24px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  section { padding: 36px 0; }
+  h2 { font-size: 24px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .shot { margin: 0 0 28px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .shot img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line); }
+  .shot figcaption { padding: 12px 16px; color: var(--muted); font-size: 15px; }
+  .shot figcaption b { color: var(--fg); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { font: 12px/1 ui-monospace, SFMono-Regular, Consolas, monospace; padding: 5px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--fg); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .sev { font-weight: 700; }
+  .crit { color: var(--crit); } .high { color: var(--high); } .med { color: var(--med); } .low { color: var(--low); }
+  .table-scroll { overflow-x: auto; }
+  pre { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; margin: 0 0 12px; }
+  ol.steps { padding-left: 20px; margin: 0; }
+  ol.steps li { margin-bottom: 14px; }
+  .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+  .num { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .num b { display: block; font-size: 28px; font-variant-numeric: tabular-nums; }
+  .num span { color: var(--muted); font-size: 14px; }
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Open source · Runs on your own device</div>
+  <h1>Catch card numbers, IDs and passwords before they reach an AI chat.</h1>
+  <p class="lede">DataShield Local checks what you paste, type, send and upload on ChatGPT, Claude, Gemini,
+    Copilot and Gmail, and scans files on your disk. A local model plus checksum rules finds personal data,
+    Indian IDs, payment data and secrets. Nothing you check ever leaves your computer.</p>
+  <div class="buttons">
+    <a class="btn primary" href="https://github.com/agarje02/data_shield_local">Get it on GitHub</a>
+    <a class="btn" href="https://huggingface.co/aniketClaude/datashield-local-v2.3">Model on Hugging Face</a>
+    <a class="btn" href="#install">Install</a>
+  </div>
+</header>
+
+<section id="demo">
+  <h2>See it work</h2>
+  <p class="sub">Screenshots from the browser extension on a local demo chat page. All values are made up.</p>
+
+  <figure class="shot">
+    <img src="shots/typing-warning.jpg" alt="A warning next to the message box says the draft holds critical data: person, credit card, card expiry, CVV, email" loading="lazy">
+    <figcaption><b>Heads-up while typing.</b> A quiet note appears as soon as the draft holds sensitive data,
+      before you hit send.</figcaption>
+  </figure>
+
+  <figure class="shot">
+    <img src="shots/send-check.jpg" alt="Before a message is sent, a dialog lists a card number, expiry and CVV with masked previews and offers Edit message, Send masked or Send anyway" loading="lazy">
+    <figcaption><b>Send check.</b> Pressing Enter stops the send and shows what was found and why it matters
+      (a card with its expiry or CVV is enough to pay). Edit the message, send it masked, or send anyway.</figcaption>
+  </figure>
+
+  <figure class="shot">
+    <img src="shots/send-masked.jpg" alt="The sent chat message shows placeholders such as [CREDIT_CARD] and [CVV] instead of the real values" loading="lazy">
+    <figcaption><b>Sent masked.</b> The assistant still gets the request; the card, expiry, CVV, name and
+      e-mail never leave your computer.</figcaption>
+  </figure>
+
+  <figure class="shot">
+    <img src="shots/paste-blocked.jpg" alt="A dialog blocks a paste containing a name, PAN, Aadhaar, phone, username and password" loading="lazy">
+    <figcaption><b>Paste check.</b> Pasted text is checked before the page sees it. Here a KYC note with
+      PAN, Aadhaar and a net-banking login is held back.</figcaption>
+  </figure>
+
+  <figure class="shot">
+    <img src="shots/file-upload.jpg" alt="A dialog blocks a dropped CSV file and lists the names, e-mails, phones, card numbers and expiry dates inside it" loading="lazy">
+    <figcaption><b>File uploads.</b> PDFs, Word, Excel, CSV, e-mail and zip files are opened and checked
+      before the site receives them.</figcaption>
+  </figure>
+
+  <figure class="shot">
+    <img src="shots/review-app.jpg" alt="The review app highlights each finding with its label and shows a critical risk banner; the order number and AWB are left alone" loading="lazy">
+    <figcaption><b>Review app.</b> Paste any text to see every finding, its severity and the overall risk.
+      Order numbers, tracking numbers and "best before" dates are left alone.</figcaption>
+  </figure>
+</section>
+
+<section id="detects">
+  <h2>What it finds</h2>
+  <p class="sub">20 labels, each with a severity and default action you can change in <code>policy.yaml</code>.</p>
+  <div class="grid">
+    <div class="card"><h3>Credentials</h3><p>Leaked keys are the costliest mistake.</p>
+      <div class="chips"><span class="chip">PASSWORD</span><span class="chip">API_KEY</span><span class="chip">AUTH_TOKEN</span><span class="chip">PRIVATE_KEY</span><span class="chip">CONNECTION_STRING</span></div></div>
+    <div class="card"><h3>Payments</h3><p>Card numbers checked with Luhn, IBAN with mod-97.</p>
+      <div class="chips"><span class="chip">CREDIT_CARD</span><span class="chip">CARD_EXPIRY</span><span class="chip">CVV</span><span class="chip">BANK_ACCOUNT</span><span class="chip">UPI_ID</span><span class="chip">OTP_PIN</span></div></div>
+    <div class="card"><h3>Indian IDs</h3><p>Aadhaar verified with the Verhoeff checksum.</p>
+      <div class="chips"><span class="chip">AADHAAR</span><span class="chip">PAN</span></div></div>
+    <div class="card"><h3>Personal</h3><p>Context-aware, so order numbers and dates of other things are left alone.</p>
+      <div class="chips"><span class="chip">PERSON</span><span class="chip">EMAIL</span><span class="chip">PHONE</span><span class="chip">ADDRESS</span><span class="chip">DATE_OF_BIRTH</span><span class="chip">USERNAME</span><span class="chip">IP_ADDRESS</span></div></div>
+  </div>
+</section>
+
+<section id="policy">
+  <h2>How it decides</h2>
+  <p class="sub">Findings are weighed together: a card number alone is serious, a card with its CVV is critical.</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Severity</th><th>Labels (default policy)</th><th>Action</th></tr>
+    <tr><td class="sev crit">Critical</td><td>CVV, OTP / PIN, password, private key, connection string, API key, auth token</td><td>Block</td></tr>
+    <tr><td class="sev high">High</td><td>Card number, card expiry, bank account, Aadhaar, PAN, UPI ID</td><td>Mask</td></tr>
+    <tr><td class="sev med">Medium</td><td>Phone, e-mail, address, date of birth, username</td><td>Warn</td></tr>
+    <tr><td class="sev low">Low</td><td>Person name, IP address</td><td>Allow</td></tr>
+  </table>
+  </div>
+</section>
+
+<section id="numbers">
+  <h2>Accuracy</h2>
+  <p class="sub">Strict span F1 with the checksum rules, on test sets whose wording was held out from training.</p>
+  <div class="numbers">
+    <div class="num"><b>0.978</b><span>20 labels, synthetic test set</span></div>
+    <div class="num"><b>0.992</b><span>earlier 12-label test set</span></div>
+    <div class="num"><b>0.956</b><span>8 real reviewed documents</span></div>
+    <div class="num"><b>~0.1 s</b><span>per message on a laptop CPU</span></div>
+  </div>
+  <p class="sub" style="margin-top:14px">Real-world accuracy is measured on few documents so far; expect it to be lower than the
+    synthetic numbers. Details and limits are in the <a href="https://huggingface.co/aniketClaude/datashield-local-v2.3">model card</a>.</p>
+</section>
+
+<section id="install">
+  <h2>Install</h2>
+  <ol class="steps">
+    <li>Install the engine and download the model once (about 740 MB, checksum-verified):
+      <pre>pip install "datashield-local @ git+https://github.com/agarje02/data_shield_local"
+datashield-local download-model</pre></li>
+    <li>Start it. The review app opens at <code>http://127.0.0.1:8765</code>:
+      <pre>datashield-local</pre></li>
+    <li>Scan files and folders (text, code, logs, PDF, Word, Excel, e-mail, zip):
+      <pre>datashield-local scan ~/Downloads --html report.html</pre></li>
+    <li>Browser extension (Chrome, Edge): run <code>datashield-local install-native-host</code> once, then load the
+      <code>extension/</code> folder from the repo in <code>chrome://extensions</code> with Developer mode on.</li>
+  </ol>
+</section>
+
+<section id="privacy">
+  <h2>Private by design</h2>
+  <div class="grid">
+    <div class="card"><h3>Local only</h3><p>The engine listens on 127.0.0.1. No text, file or finding is sent anywhere.</p></div>
+    <div class="card"><h3>Locked to you</h3><p>Programs need a per-user token; web pages and other hosts are refused.</p></div>
+    <div class="card"><h3>No values in logs</h3><p>The audit log keeps labels, locations and salted hashes, never the values.</p></div>
+    <div class="card"><h3>Fails open</h3><p>If the engine is off, the extension steps aside instead of slowing you down.</p></div>
+  </div>
+</section>
+
+<footer>
+  DataShield Local · Apache-2.0 ·
+  <a href="https://github.com/agarje02/data_shield_local">GitHub</a> ·
+  <a href="https://huggingface.co/aniketClaude/datashield-local-v2.3">Model</a>.
+  Use it to reduce leaks, not as a guarantee.
+</footer>
+
+</div>
+</body>
+</html>

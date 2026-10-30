@@ -10,6 +10,18 @@ before they leak: in text you paste into AI tools, in files on your disk, in upl
   are worse together (card + CVV, name + Aadhaar + DOB), in an editable `policy.yaml`.
 - **Clients:** a review web app, a file and folder scanner, a Chrome / Edge extension.
 
+**Product page:** [huggingface.co/spaces/aniketClaude/datashield-local](https://huggingface.co/spaces/aniketClaude/datashield-local) ·
+**Model:** [aniketClaude/datashield-local-v2.3](https://huggingface.co/aniketClaude/datashield-local-v2.3)
+
+| Send check in a chat | Sent masked |
+|---|---|
+| ![Send check dialog listing a card number, expiry and CVV](docs/screenshots/send-check.jpg) | ![The sent message with placeholders instead of the values](docs/screenshots/send-masked.jpg) |
+| **Paste check** | **Review app** |
+| ![A paste with PAN, Aadhaar and a login held back](docs/screenshots/paste-blocked.jpg) | ![Highlighted findings with a critical risk banner](docs/screenshots/review-app.jpg) |
+
+All values in the screenshots are made up; they were taken on the local demo chat page
+(`http://127.0.0.1:8765/ext-test/demo`).
+
 | Group | Labels |
 |---|---|
 | Personal | PERSON, EMAIL, PHONE, ADDRESS, DATE_OF_BIRTH, USERNAME, IP_ADDRESS |
@@ -79,7 +91,7 @@ Real-world numbers will be lower than synthetic ones; please report misses with 
 | `datashield_local/` | the installable package: engine, API, file extraction, policy, model wrapper |
 | `extension/` | Chrome / Edge extension (Manifest V3, plain JS) |
 | `datagen/`, `train_ner.py`, `evaluate.py`, ... | data generation, training and evaluation: [docs/TRAINING.md](docs/TRAINING.md) |
-| `publish/` | model card, Hugging Face model and Space preparation |
+| `publish/` | model card, Hugging Face model preparation, product page (`hf_static/`) |
 | `ROADMAP.md`, `PRODUCT_PLAN.md` | where this is going |
 
 Development from source:
