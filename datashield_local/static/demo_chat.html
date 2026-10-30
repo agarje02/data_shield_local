@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat demo</title>
+<style>
+  :root { --bg: #f4f5f7; --card: #fff; --fg: #1d2433; --muted: #667085; --line: #e3e6eb; --me: #e8eefc; --accent: #2f5bd3; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1216; --card: #171b21; --fg: #e6e9ee; --muted: #8b95a5; --line: #2a313b; --me: #1f2a44; --accent: #7aa2ff; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--card); font-weight: 600; }
+  header span { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 13px; }
+  #thread { flex: 1; overflow: auto; padding: 24px 16px; }
+  .msg { max-width: 720px; margin: 0 auto 14px; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap; }
+  .bot { background: var(--card); border: 1px solid var(--line); }
+  .me { background: var(--me); margin-left: auto; margin-right: max(16px, calc(50% - 360px)); max-width: 560px; }
+  footer { padding: 14px 16px 22px; }
+  .composer { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; background: var(--card);
+    border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+  #box { flex: 1; min-height: 48px; max-height: 200px; overflow: auto; outline: none; padding: 4px 6px; }
+  #box:empty::before { content: attr(data-placeholder); color: var(--muted); }
+  #send { border: 0; border-radius: 10px; background: var(--accent); color: #fff; padding: 8px 16px; font: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>Assistant <span>demo chat page · runs locally</span></header>
+<div id="thread">
+  <div class="msg bot">Hi! How can I help you today?</div>
+</div>
+<footer>
+  <div class="composer">
+    <div id="box" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message the assistant"></div>
+    <button id="send" aria-label="Send message">Send</button>
+  </div>
+</footer>
+<script>
+  const box = document.getElementById("box");
+  const thread = document.getElementById("thread");
+  const add = (cls, text) => {
+    const d = document.createElement("div");
+    d.className = `msg ${cls}`;
+    d.textContent = text;
+    thread.appendChild(d);
+    thread.scrollTop = thread.scrollHeight;
+  };
+  const send = () => {
+    const text = box.innerText.trim();
+    if (!text) return;
+    add("me", text);
+    box.innerHTML = "";
+    setTimeout(() => add("bot", "Thanks, got it."), 400);
+  };
+  box.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  document.getElementById("send").addEventListener("click", send);
+</script>
+</body>
+</html>

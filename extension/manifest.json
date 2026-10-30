@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DataShield Local",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Checks what you paste or upload into AI tools and webmail for sensitive data, on this device.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAycQ5ccdraJPpdtt/eeyPafDEmhqVWXz3dT3soK7hOK0+5Ao+sgTPKTd9nIvvHAkCBzRfShOaEl3baKzI+74N5psWrXDtn9nkcaQ/HANYBXyj6MYWZPuJxOsIITkU1/dyvJ145OgKLuw2Q80PfJZSih4kqj6FWpyNkTEUY78zLEAkT1PkK1htnhwwzai7jmIrdQ6L/lT0lYYf0sKS7vrIrQllDag6sUtiFpKPSqKvEaWTfHGcDG7KjuFsbk1RGq7j0RB/Q2czLauyyOH+cnGKS168Y+odyu98AAX6Z9DQ85avyh1oMSmLDhJoUD0yUWc2ibUExtqbss0YTTSd60kf7wIDAQAB",
   "minimum_chrome_version": "111",

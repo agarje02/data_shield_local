@@ -24,6 +24,8 @@
   let bypass = false;                    // true while we replay an approved send
   let lastEditable = null;               // the composer the user typed in last
   let checking = false;                  // a send check is already showing
+  let offUntil = 0;                      // engine down: step aside (no interception) until then
+  const engineOff = () => Date.now() < offUntil;
 
   // ---------------------------------------------------------------- lifecycle
   // After the extension is reloaded or updated, this copy is orphaned (chrome.runtime.id is gone).
@@ -54,7 +56,10 @@
     try { return chrome.runtime.sendMessage(msg).catch(() => ({ ok: false, error: "extension_reloaded" })); }
     catch (e) { return Promise.resolve({ ok: false, error: "extension_reloaded" }); }
   };
-  const engine = (op, fields) => send({ type: "engine", op, fields });
+  const engine = (op, fields) => send({ type: "engine", op, fields }).then((res) => {
+    if (res && res.retryMs) offUntil = Date.now() + res.retryMs;
+    return res;
+  });
   const log = (event) => send({ type: "log", event });
   const labelsOf = (a) => [...new Set(a.findings.map((f) => f.label))];
   const itemsOf = (a, text) => a.findings.map((f) => ({ label: f.label, severity: f.severity,
@@ -152,7 +157,7 @@
   });
 
   on("paste", (e) => {
-    if (disabled || bypass || REPLAY.has(e)) return;
+    if (disabled || bypass || engineOff() || REPLAY.has(e)) return;
     const t = editable(e.composedPath()[0]);
     const text = e.clipboardData ? e.clipboardData.getData("text/plain") : "";
     if (!t || text.trim().length < 4) return;
@@ -220,7 +225,7 @@
   }
 
   on("keydown", (e) => {
-    if (disabled || bypass || REPLAY.has(e) || !D.isSubmitKey(e, host)) return;
+    if (disabled || bypass || engineOff() || REPLAY.has(e) || !D.isSubmitKey(e, host)) return;
     const t = editable(e.composedPath()[0]);
     if (!t || t.tagName === "INPUT") return;      // single-line inputs: search boxes, subjects
     e.preventDefault();
@@ -231,7 +236,7 @@
   });
 
   on("click", (e) => {
-    if (disabled || bypass || checking) return;
+    if (disabled || bypass || checking || engineOff()) return;
     const btn = e.composedPath()[0] instanceof Element ? e.composedPath()[0].closest("button, [role=button]") : null;
     if (!btn || !isSend(btn)) return;
     const t = lastEditable && lastEditable.isConnected ? lastEditable : editable(document.activeElement);
@@ -281,7 +286,7 @@
   const held = new WeakMap();                    // input element -> promise of the verdict
   function onFileEvent(e) {
     const input = e.composedPath()[0];
-    if (disabled || REPLAY.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file") return;
+    if (disabled || engineOff() || REPLAY.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file") return;
     if (!input.files || !input.files.length) return;
     e.stopImmediatePropagation();
     if (held.has(input)) return;                 // the twin event (input + change) of the same pick
@@ -303,7 +308,7 @@
   on("change", onFileEvent);
 
   on("drop", (e) => {
-    if (disabled || REPLAY.has(e) || !e.dataTransfer) return;
+    if (disabled || engineOff() || REPLAY.has(e) || !e.dataTransfer) return;
     const files = [...(e.dataTransfer.files || [])];
     const target = e.composedPath()[0];
     if (files.length) {
@@ -338,6 +343,7 @@
     const t = editable(e.composedPath()[0]);
     if (!t) return;
     lastEditable = t;
+    if (engineOff()) return;
     clearTimeout(typingTimer);
     typingTimer = setTimeout(async () => {
       const text = textOf(t);

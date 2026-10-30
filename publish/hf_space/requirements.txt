@@ -1,3 +1,3 @@
-# the engine package (published to PyPI), which brings onnxruntime, transformers, huggingface_hub
-datashield-local>=0.2
+# the engine package from GitHub until it is on PyPI; brings onnxruntime, transformers, huggingface_hub
+datashield-local @ git+https://github.com/agarje02/data_shield_local@main
 gradio>=4.44

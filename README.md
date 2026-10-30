@@ -20,8 +20,8 @@ before they leak: in text you paste into AI tools, in files on your disk, in upl
 ## Quick start
 
 ```bash
-pip install datashield-local
-datashield-local download-model --repo REPLACE/datashield-local-v2.3  # once, ~740 MB, checksum-verified
+pip install "datashield-local @ git+https://github.com/agarje02/data_shield_local"   # PyPI release soon
+datashield-local download-model  # once, ~740 MB, checksum-verified
 datashield-local                    # engine + review app on http://127.0.0.1:8765
 ```
 

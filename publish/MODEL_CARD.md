@@ -11,7 +11,7 @@ tags: [pii, dlp, secrets, ner, privacy, aadhaar, pan, upi, onnx]
 
 A token-classification model that finds sensitive values in text: personal data, Indian IDs,
 payment data and credentials. It is the model behind the
-[DataShield Local](https://github.com/REPLACE/datashield-local) local engine,
+[DataShield Local](https://github.com/agarje02/data_shield_local) local engine,
 which adds checksum / format rules, a severity policy and file, browser and clipboard scanning.
 Everything runs on your own device; this repo only hosts the weights.
 
@@ -28,8 +28,8 @@ Everything runs on your own device; this repo only hosts the weights.
 
 With the engine (rules, policy, files, browser extension):
 ```bash
-pip install datashield-local
-datashield-local download-model --repo REPLACE/datashield-local-v2.3
+pip install "datashield-local @ git+https://github.com/agarje02/data_shield_local"   # PyPI release soon
+datashield-local download-model
 datashield-local                                # http://127.0.0.1:8765
 datashield-local scan ./folder --html report.html
 ```

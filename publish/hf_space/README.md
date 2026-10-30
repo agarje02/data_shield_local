@@ -10,6 +10,6 @@ license: apache-2.0
 short_description: Find PII, Indian IDs, payment data and secrets in text
 ---
 
-Demo of the [DataShield Local](https://github.com/REPLACE/datashield-local) model.
+Demo of the [DataShield Local](https://github.com/agarje02/data_shield_local) model.
 Use the sample texts or made-up data; the real product runs on your own device. Inputs are not
-logged. Set the Space variable `DATASHIELD_MODEL_REPO` to the model repo id.
+logged.

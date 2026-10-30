@@ -14,7 +14,7 @@ from datashield_local.engine.core import Engine  # noqa: E402
 from datashield_local.engine.model_hub import download  # noqa: E402
 from datashield_local.policy import DEFAULT_POLICY  # noqa: E402
 
-MODEL_REPO = os.environ.get("DATASHIELD_MODEL_REPO", "REPLACE/datashield-local-v2.3")
+MODEL_REPO = os.environ.get("DATASHIELD_MODEL_REPO", "aniketClaude/datashield-local-v2.3")
 engine = Engine(download(MODEL_REPO, dest="model"), DEFAULT_POLICY)      # no audit log here
 
 SAMPLES = [

@@ -1,5 +1,6 @@
 import io
 import json
+import time
 
 from datashield_local.engine import native_host as nh
 from datashield_local.engine.install_host import extension_id
@@ -23,6 +24,15 @@ def test_too_large_response_becomes_an_error():
 def test_engine_down_and_unknown_op(tmp_path):
     assert nh.handle({"id": 3, "op": "scan", "text": "x"}, tmp_path) == {"id": 3, "ok": False, "error": "engine_down"}
     assert nh.handle({"id": 4, "op": "rm -rf"}, tmp_path)["error"] == "unknown_op"
+
+
+def test_stale_runtime_file_fails_fast(tmp_path):
+    # engine killed: engine.json still names a port, but nothing listens there
+    (tmp_path / "engine.json").write_text(json.dumps({"port": 1}))
+    (tmp_path / "engine_secret.json").write_text(json.dumps({"token": "t"}))
+    t0 = time.perf_counter()
+    assert nh.handle({"id": 5, "op": "scan", "text": "x"}, tmp_path)["error"] == "engine_down"
+    assert time.perf_counter() - t0 < 1.0
 
 
 def test_main_loop_answers_until_eof(tmp_path, monkeypatch):

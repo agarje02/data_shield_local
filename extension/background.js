@@ -4,6 +4,12 @@
 const HOST = "com.datashield.engine";
 const TIMEOUT_MS = { health: 5000, scan: 60000, upload: 300000, feedback: 30000 };
 const MAX_EVENTS = 50;
+// Engine down: answer "engine_off" at once instead of asking the host on every keystroke or send,
+// and look again after a pause that grows while the engine stays down.
+const DOWN_ERRORS = new Set(["engine_down", "host_unavailable", "host_closed"]);
+const RETRY_MS = { first: 15000, max: 120000 };
+let offUntil = 0;
+let retryMs = RETRY_MS.first;
 
 let port = null;
 let nextId = 1;
@@ -37,7 +43,23 @@ function connect() {
   return port;
 }
 
-function call(op, fields = {}) {
+async function call(op, fields = {}) {
+  if (op !== "health" && Date.now() < offUntil) {
+    return { ok: false, error: "engine_off", retryMs: offUntil - Date.now() };
+  }
+  const res = await rawCall(op, fields);
+  if (res.ok) {
+    offUntil = 0;
+    retryMs = RETRY_MS.first;
+  } else if (DOWN_ERRORS.has(res.error)) {
+    offUntil = Date.now() + retryMs;
+    res.retryMs = retryMs;
+    retryMs = Math.min(retryMs * 2, RETRY_MS.max);
+  }
+  return res;
+}
+
+function rawCall(op, fields) {
   return new Promise((resolve) => {
     const p = connect();
     if (!p) return resolve({ ok: false, error: "host_unavailable" });
@@ -68,7 +90,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   (async () => {
     if (msg.type === "engine") {
       const res = await call(msg.op, msg.fields);
-      if (msg.op !== "feedback") await setBadge(res.ok);
+      if (msg.op !== "feedback" && res.error !== "engine_off") await setBadge(res.ok);
       reply(res);
     } else if (msg.type === "log") {
       await logEvent({ host: sender.tab ? new URL(sender.tab.url).hostname : "", ...msg.event });

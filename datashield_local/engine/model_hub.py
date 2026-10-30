@@ -10,9 +10,9 @@ from pathlib import Path
 
 from datashield_local.engine.paths import MODEL_NAME, data_dir
 
-# Set to the published repo (e.g. "<your-hf-user>/datashield-local-v2.3") before release;
+# The published model repo;
 # DATASHIELD_MODEL_REPO or --repo override it.
-DEFAULT_REPO = os.environ.get("DATASHIELD_MODEL_REPO", "")
+DEFAULT_REPO = os.environ.get("DATASHIELD_MODEL_REPO", "aniketClaude/datashield-local-v2.3")
 SUMS_FILE = "SHA256SUMS"
 
 

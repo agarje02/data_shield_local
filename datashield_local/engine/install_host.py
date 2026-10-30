@@ -50,10 +50,10 @@ def allowed_extension_ids():
 def _launcher(native_dir):
     script = Path(__file__).resolve().parent / "native_host.py"
     if sys.platform == "win32":
-        path = native_dir / "sdd_native_host.bat"
+        path = native_dir / "datashield_native_host.bat"
         path.write_text(f'@echo off\r\n"{sys.executable}" -u "{script}" %*\r\n', encoding="utf-8")
     else:
-        path = native_dir / "sdd_native_host.sh"
+        path = native_dir / "datashield_native_host.sh"
         path.write_text(f'#!/bin/sh\nexec "{sys.executable}" -u "{script}" "$@"\n', encoding="utf-8")
         path.chmod(0o700)
     return path

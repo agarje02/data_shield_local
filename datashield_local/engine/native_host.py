@@ -10,11 +10,13 @@ pages never get a route to the engine and the extension never sees the token.
 Standard library only, so it starts fast. Installed with `python -m engine install-native-host`.
 """
 import json
+import socket
 import struct
 import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # source checkout: the folder holding datashield_local/
 
@@ -52,12 +54,22 @@ def engine_target(ddir):
         return None
 
 
+def listening(base_url, timeout=0.3):
+    """Quick port check. A stale engine.json (engine killed) would otherwise cost ~2 s per request:
+    Windows retries a refused connection to localhost before giving up."""
+    try:
+        socket.create_connection(("127.0.0.1", urlsplit(base_url).port), timeout=timeout).close()
+        return True
+    except OSError:
+        return False
+
+
 def handle(msg, ddir):
     rid, op = msg.get("id"), msg.get("op")
     if op not in OPS:
         return {"id": rid, "ok": False, "error": "unknown_op"}
     target = engine_target(ddir)
-    if target is None:
+    if target is None or not listening(target[0]):
         return {"id": rid, "ok": False, "error": "engine_down"}
     method, path, timeout = OPS[op]
     body = {k: v for k, v in msg.items() if k not in ("id", "op")}

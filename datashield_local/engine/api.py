@@ -152,6 +152,11 @@ def create_app(engine, store, token, port, allowed_hosts=None):
         """Local page the browser extension also runs on, for testing it without real sites."""
         return FileResponse(STATIC / "ext_test.html")
 
+    @app.get("/ext-test/demo")
+    def ext_demo():
+        """A plain chat page for product screenshots of the extension (same match pattern)."""
+        return FileResponse(STATIC / "demo_chat.html")
+
     @app.get("/api/info")
     def info():
         return {**engine.info(), "engine": ENGINE_VERSION, "feedback_db": str(store.path)}
