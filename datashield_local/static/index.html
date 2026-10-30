@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataShield Local</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>DataShield Local</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="scan" role="tab">Scan</button>
+    <button class="tab" data-tab="feedback" role="tab">Feedback <span id="fbCount" class="pill"></span></button>
+  </nav>
+  <div id="modelInfo" class="model-info">loading model…</div>
+</header>
+
+<main>
+  <!-- ------------------------------------------------------------------ scan -->
+  <section id="tab-scan" class="tab-panel">
+    <div class="grid">
+      <div class="card">
+        <div class="card-head">
+          <h2>Input</h2>
+          <div class="row gap">
+            <select id="samples" title="Load a sample">
+              <option value="">Samples…</option>
+            </select>
+            <button id="openFile" class="ghost">Open file</button>
+            <input id="fileInput" type="file" hidden>
+          </div>
+        </div>
+        <textarea id="input" spellcheck="false" placeholder="Paste an email, chat, log, .env file, CSV…"></textarea>
+        <div class="card-foot">
+          <label class="check"><input type="checkbox" id="optThr" checked> Tuned thresholds</label>
+          <label class="check"><input type="checkbox" id="optVal" checked> Checksum &amp; format rules</label>
+          <span id="charCount" class="muted"></span>
+          <button id="scanBtn" class="primary">Scan <kbd>Ctrl ⏎</kbd></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Review</h2>
+          <span id="status" class="muted">Nothing scanned yet</span>
+        </div>
+        <div id="risk" class="risk" hidden></div>
+        <div id="stale" class="banner" hidden>The input changed after this scan. Scan again before saving feedback.</div>
+        <div id="result" class="result empty">Results appear here. Click a highlight to fix its type or remove it; select any text to mark something the detector missed.</div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+
+    <div class="card" id="fileCard" hidden>
+      <div class="card-head"><h2>File scan</h2><span id="fileStatus" class="muted"></span></div>
+      <div id="fileRisk" class="risk"></div>
+      <table class="spans">
+        <thead><tr><th>Severity</th><th>Type</th><th>Where</th><th>Value</th></tr></thead>
+        <tbody id="fileRows"></tbody>
+      </table>
+      <p id="fileSkipped" class="muted small"></p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-head"><h2>Detections</h2><span id="changes" class="muted"></span></div>
+        <table class="spans">
+          <thead><tr><th>Type</th><th>Severity</th><th>Value</th><th>Score</th><th>By</th><th></th></tr></thead>
+          <tbody id="spanRows"><tr><td colspan="6" class="muted">—</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Masked output</h2><button id="copyMasked" class="ghost">Copy</button></div>
+        <pre id="masked" class="masked muted">—</pre>
+      </div>
+    </div>
+
+    <div class="card save-bar">
+      <input id="note" type="text" placeholder="Optional note, e.g. “SKU flagged as PAN”, “real email from support inbox”">
+      <button id="resetBtn" class="ghost" disabled>Undo my edits</button>
+      <button id="saveBtn" class="primary" disabled>Save review</button>
+    </div>
+    <p class="muted small">Saving stores the text and your corrected labels in a local database on this machine only. If nothing needed fixing, save anyway: confirmed-correct and confirmed-clean examples are just as useful.</p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ feedback -->
+  <section id="tab-feedback" class="tab-panel" hidden>
+    <div class="tiles" id="tiles"></div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-head"><h2>Errors by type</h2></div>
+        <table class="spans">
+          <thead><tr><th>Type</th><th title="detector found it, you confirmed">Correct</th><th title="you added it">Missed</th><th title="you removed it">False alarm</th><th title="right place, wrong edges">Boundary</th></tr></thead>
+          <tbody id="labelRows"></tbody>
+        </table>
+        <p class="muted small" id="relabels"></p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Saved reviews</h2>
+          <a id="exportBtn" class="button primary" href="/api/feedback/export" download="feedback.jsonl">Export JSONL</a>
+        </div>
+        <ul id="recent" class="recent"></ul>
+      </div>
+    </div>
+    <p class="muted small" id="dbPath"></p>
+  </section>
+</main>
+
+<!-- popovers -->
+<div id="spanPop" class="pop" hidden>
+  <div class="pop-title">Change type</div>
+  <div id="spanPopLabels" class="label-grid"></div>
+  <button id="spanPopRemove" class="danger wide">Not sensitive: remove</button>
+</div>
+<div id="addPop" class="pop" hidden>
+  <div class="pop-title">Mark “<span id="addPopValue"></span>” as</div>
+  <div id="addPopLabels" class="label-grid"></div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

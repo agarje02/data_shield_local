@@ -1,0 +1,10 @@
+# Laptop runtime for the local app (ONNX model, no torch needed)
+onnxruntime>=1.18
+transformers>=4.46,<6
+sentencepiece>=0.2
+tokenizers>=0.20
+fastapi>=0.118
+uvicorn>=0.30
+pyyaml>=6.0
+numpy>=1.26
+pypdf>=5.0

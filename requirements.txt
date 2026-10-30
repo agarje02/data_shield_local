@@ -1,0 +1,12 @@
+# Colab already ships torch; do not pin it here.
+transformers>=4.46,<6
+accelerate>=0.34
+sentencepiece>=0.2
+protobuf>=4.25
+tiktoken>=0.7
+pyyaml>=6.0
+numpy>=1.26
+faker>=25.0
+pytest>=8.0
+onnx>=1.16
+onnxruntime>=1.18

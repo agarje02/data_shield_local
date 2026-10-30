@@ -1,0 +1,74 @@
+# Detection policy: how much each finding matters and what the engine does about it.
+# The model only finds and names values; this file decides severity and action.
+# Edit freely (re-order labels, change actions); the app reads it at start-up.
+
+# Highest first. score feeds the document risk score; action is the default for that level.
+levels:
+  critical: {score: 4, action: block}   # direct money loss or account takeover
+  high:     {score: 3, action: mask}    # fraud or identity theft
+  medium:   {score: 2, action: warn}    # personal data
+  low:      {score: 1, action: allow}   # low risk on its own; logged
+
+labels:
+  # critical: enough on its own (or with what usually sits next to it) to pay or log in
+  CVV: critical
+  OTP_PIN: critical
+  PASSWORD: critical
+  PRIVATE_KEY: critical
+  CONNECTION_STRING: critical
+  API_KEY: critical
+  AUTH_TOKEN: critical
+  # high
+  CREDIT_CARD: high
+  CARD_EXPIRY: high
+  BANK_ACCOUNT: high
+  AADHAAR: high
+  PAN: high
+  UPI_ID: high
+  # medium
+  PHONE: medium
+  EMAIL: medium
+  ADDRESS: medium
+  DATE_OF_BIRTH: medium
+  USERNAME: medium
+  # low
+  PERSON: low
+  IP_ADDRESS: low
+
+default: medium   # any label not listed above
+
+# Harmless contexts: a finding of this label is dropped when one of these phrases ends just
+# before it (same line, within ~40 characters, case-insensitive). For short values whose meaning
+# comes only from the words in front ("best before 09/27" is a product date, not a card expiry).
+# Applied by the engine only; evaluate.py scores the model + rules without it.
+negative_context:
+  CARD_EXPIRY: [best before, use by, mfg, manufactured, packed on, warranty till, offer valid]
+  OTP_PIN: [ext, extension, intercom, room, flight, pin code, pincode, postal code, port]
+  CVV: [ext, extension, room, flight, error, status, http, port]
+
+# Values that together are worse than each alone. A combo fires when the document holds every
+# label in `all` and at least one label from each group in `any`.
+combos:
+  - name: card_kit
+    all: [CREDIT_CARD]
+    any: [[CVV, CARD_EXPIRY]]
+    level: critical
+    reason: card number with expiry or CVV is enough to make a payment
+  - name: identity_kit
+    all: [PERSON]
+    any: [[AADHAAR, PAN], [DATE_OF_BIRTH, ADDRESS, PHONE]]
+    level: critical
+    reason: name + government ID + personal details is enough to impersonate someone
+  - name: login
+    all: [PASSWORD]
+    any: [[USERNAME, EMAIL]]
+    level: critical
+    reason: username or email with its password gives account access
+  - name: upi_payment
+    all: [UPI_ID, OTP_PIN]
+    level: critical
+    reason: UPI ID with an OTP or PIN can authorise a payment
+  - name: bank_details
+    all: [BANK_ACCOUNT, PERSON]
+    level: high
+    reason: account number with the holder's name

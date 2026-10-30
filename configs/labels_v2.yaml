@@ -1,0 +1,26 @@
+# Entity types for detection engine v2: v1's 12 + financial and credential types.
+# Freeze per data version: changing this list means a new data version and a retrain.
+version: v2
+labels:
+  - PERSON
+  - EMAIL
+  - PHONE
+  - ADDRESS
+  - DATE_OF_BIRTH
+  - AADHAAR
+  - PAN
+  - CREDIT_CARD
+  - BANK_ACCOUNT
+  - IP_ADDRESS
+  - API_KEY
+  - PASSWORD
+  # financial
+  - UPI_ID
+  - CVV
+  - CARD_EXPIRY
+  - OTP_PIN
+  # credentials
+  - USERNAME
+  - AUTH_TOKEN
+  - PRIVATE_KEY
+  - CONNECTION_STRING

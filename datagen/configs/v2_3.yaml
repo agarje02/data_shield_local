@@ -1,0 +1,31 @@
+# Dataset v2_3: v2_2 + shared vocabulary: field names and core synonyms (UID, CSC, security code) in every split.
+version: v2_3
+seed: 11
+
+sizes:
+  train: 20000
+  val: 1500
+  test: 1500
+  clean_test: 1000      # no PII at all -> false positives per 1k clean docs
+
+eval_frac: 0.15         # share of each component group held out for val, and again for test
+clean_doc_frac: 0.45    # documents with no PII at all (train/val/test)
+neg_sentence_frac: 0.35 # non-PII sentences that contain a look-alike value
+long_doc_frac: 0.04     # 18-40 sentence documents (exercise the 512-token windows)
+combo_frac: 0.15      # positive sentences with several values (card+expiry+CVV, user+password)
+
+style_weights:
+  email: 3
+  chat: 2
+  log: 2
+  ticket: 1.5
+  memo: 2
+  config: 1.5
+  form: 1
+  table: 1.5
+  mixed: 2
+
+key_style_keep: 0.45      # share of record keys kept as written; the rest get another real-world format
+inline_records: true      # one-line "key: value | key: value" records
+prefixless_api_keys: true # 20% of API keys have no provider prefix (context decides API_KEY vs AUTH_TOKEN)
+share_keys: true          # record field names in every split (vocabulary, not phrasing)

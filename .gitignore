@@ -1,0 +1,18 @@
+.venv/
+runs/
+reports/
+__pycache__/
+*.pyc
+.pytest_cache/
+models/
+feedback/
+extension_key.pem
+*.crx
+publish/hf_model/
+dist/
+build/
+*.egg-info/
+# generated synthetic datasets (rebuild with python -m datagen.build); upload bundles and logs
+data/v*/
+*.zip
+*.log

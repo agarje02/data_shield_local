@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "DataShield Local",
+  "version": "0.2.2",
+  "description": "Checks what you paste or upload into AI tools and webmail for sensitive data, on this device.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAycQ5ccdraJPpdtt/eeyPafDEmhqVWXz3dT3soK7hOK0+5Ao+sgTPKTd9nIvvHAkCBzRfShOaEl3baKzI+74N5psWrXDtn9nkcaQ/HANYBXyj6MYWZPuJxOsIITkU1/dyvJ145OgKLuw2Q80PfJZSih4kqj6FWpyNkTEUY78zLEAkT1PkK1htnhwwzai7jmIrdQ6L/lT0lYYf0sKS7vrIrQllDag6sUtiFpKPSqKvEaWTfHGcDG7KjuFsbk1RGq7j0RB/Q2czLauyyOH+cnGKS168Y+odyu98AAX6Z9DQ85avyh1oMSmLDhJoUD0yUWc2ibUExtqbss0YTTSd60kf7wIDAQAB",
+  "minimum_chrome_version": "111",
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "DataShield Local",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://mail.google.com/*",
+        "http://127.0.0.1:8765/ext-test*"
+      ],
+      "js": [
+        "decide.js",
+        "ui.js",
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://copilot.microsoft.com/*",
+    "https://mail.google.com/*",
+    "http://127.0.0.1:8765/ext-test*"
+  ]
+}

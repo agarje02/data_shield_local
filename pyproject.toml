@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datashield-local"
+version = "0.2.0"
+description = "Local detection engine for PII, Indian IDs, financial data and secrets: scans text, files and browser input on your own device."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+keywords = ["dlp", "pii", "secrets", "privacy", "ner", "onnx", "aadhaar", "data-loss-prevention"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Security",
+]
+# Runtime only: the ONNX model runs on CPU without PyTorch. Training has its own requirements.txt.
+dependencies = [
+    "onnxruntime>=1.18",
+    "transformers>=4.46,<6",
+    "tokenizers>=0.20",
+    "sentencepiece>=0.2",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "fastapi>=0.118",
+    "uvicorn>=0.30",
+    "pypdf>=5.0",
+    "huggingface_hub>=0.24",
+]
+
+[project.scripts]
+datashield-local = "datashield_local.engine.__main__:main"
+
+[tool.setuptools]
+packages = ["datashield_local", "datashield_local.engine"]
+
+[tool.setuptools.package-data]
+datashield_local = ["policy.yaml", "static/*"]

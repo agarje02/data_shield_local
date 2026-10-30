@@ -1,0 +1,3 @@
+# the engine package (published to PyPI), which brings onnxruntime, transformers, huggingface_hub
+datashield-local>=0.2
+gradio>=4.44

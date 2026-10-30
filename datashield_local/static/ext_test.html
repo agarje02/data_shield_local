@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extension test page</title>
+<style>
+  :root { --bg: #f6f7f9; --card: #fff; --fg: #1d2433; --muted: #667085; --line: #e3e6eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1216; --card: #171b21; --fg: #e6e9ee; --muted: #8b95a5; --line: #2a313b; } }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  textarea, [contenteditable] { width: 100%; box-sizing: border-box; min-height: 70px; border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px; background: transparent; color: inherit; font: inherit; }
+  #drop { border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); }
+  pre { white-space: pre-wrap; font-size: 12px; color: var(--muted); margin: 0; max-height: 200px; overflow: auto; }
+  h2 { font-size: 13px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Extension test page</h1>
+  <p>The DataShield Local extension runs here (and on the protected AI and mail sites). Paste or
+     drop text into the boxes, or pick / drop files; the log shows what this page actually received.</p>
+  <div class="card"><h2>Textarea</h2><textarea id="ta" placeholder="Paste here"></textarea></div>
+  <div class="card"><h2>Rich editor (contenteditable)</h2><div id="ce" contenteditable="true"></div></div>
+  <div class="card"><h2>Chat composer (Enter or the button sends, Shift+Enter = new line)</h2>
+    <div id="chat" contenteditable="true" role="textbox" aria-label="Message"></div>
+    <button id="send" aria-label="Send message" style="margin-top:8px">Send</button></div>
+  <div class="card"><h2>File upload</h2><input id="file" type="file" multiple>
+    <div id="drop" style="margin-top:8px">or drop files here</div></div>
+  <div class="card"><h2>What the page received</h2><pre id="log"></pre></div>
+</main>
+<script>
+  const log = (m) => { const l = document.getElementById("log"); l.textContent = `${new Date().toLocaleTimeString()}  ${m}\n` + l.textContent; };
+  for (const id of ["ta", "ce"]) {
+    const el = document.getElementById(id);
+    el.addEventListener("input", () => log(`${id} now: ${JSON.stringify((el.value ?? el.innerText).slice(-120))}`));
+  }
+  document.getElementById("file").addEventListener("change", (e) =>
+    log(`file input received: ${[...e.target.files].map((f) => f.name).join(", ") || "(cleared)"}`));
+  const chat = document.getElementById("chat");
+  const send = () => { if (!chat.innerText.trim()) return; log(`SENT: ${JSON.stringify(chat.innerText)}`); chat.innerHTML = ""; };
+  chat.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  document.getElementById("send").addEventListener("click", send);
+  const drop = document.getElementById("drop");
+  drop.addEventListener("dragover", (e) => e.preventDefault());
+  drop.addEventListener("drop", (e) => { e.preventDefault(); log(`drop received: ${[...e.dataTransfer.files].map((f) => f.name).join(", ")}`); });
+</script>
+</body>
+</html>

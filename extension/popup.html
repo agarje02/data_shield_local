@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DataShield Local</title>
+<style>
+  :root { --bg: #fff; --fg: #1d2433; --muted: #667085; --line: #e3e6eb; --ok: #2e7d32; --bad: #c62828; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1b2027; --fg: #e6e9ee; --muted: #a9b1bd; --line: #2a313b; } }
+  body { margin: 0; width: 330px; font: 13px system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  header { padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  section { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; background: var(--muted); }
+  .muted { color: var(--muted); font-size: 12px; }
+  ul { list-style: none; margin: 6px 0 0; padding: 0; max-height: 220px; overflow: auto; }
+  li { padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .risk { font-weight: 700; text-transform: uppercase; font-size: 10px; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+  <header>DataShield Local</header>
+  <section class="row"><span><span id="dot" class="dot"></span><span id="status">checking engine…</span></span>
+    <a id="open" href="#" class="muted">review app</a></section>
+  <section class="row"><span>Protect <b id="site">this site</b></span><input id="toggle" type="checkbox" checked></section>
+  <section><div class="muted">Recent (labels only, no values)</div><ul id="events"><li class="muted">nothing yet</li></ul></section>
+  <script src="popup.js"></script>
+</body>
+</html>
