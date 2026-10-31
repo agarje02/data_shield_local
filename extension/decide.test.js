@@ -4,14 +4,26 @@ const test = require("node:test");
 const assert = require("node:assert");
 const { decide, worst, preview, siteDisabled } = require("./decide.js");
 
-test("policy action maps to choices, original never offered on block", () => {
+test("policy action maps to choices, original is never the default on block", () => {
   assert.deepStrictEqual(decide({ risk: "none", action: "allow" }), { mode: "allow", choices: [] });
   assert.deepStrictEqual(decide({ risk: "low", action: "allow" }), { mode: "allow", choices: [] });
   assert.strictEqual(decide({ risk: "medium", action: "warn" }).choices[0], "original");
   assert.strictEqual(decide({ risk: "high", action: "mask" }).choices[0], "masked");
-  assert.ok(!decide({ risk: "critical", action: "block" }).choices.includes("original"));
-  assert.deepStrictEqual(decide({ risk: "critical", action: "block" }, "file").choices, ["cancel"]);
+  for (const kind of ["text", "file", "submit"]) {
+    const ch = decide({ risk: "critical", action: "block" }, kind).choices;
+    assert.notStrictEqual(ch[0], "original");
+    assert.strictEqual(ch[ch.length - 1], "original");    // the user may still go ahead
+  }
   assert.strictEqual(decide(null).mode, "allow");
+});
+
+test("blocks can be made final in the settings", () => {
+  for (const kind of ["text", "file", "submit"]) {
+    const ch = decide({ risk: "critical", action: "block" }, kind, { allowOverride: false }).choices;
+    assert.ok(ch.length && !ch.includes("original"));
+  }
+  // only blocks: a warning or mask can always be passed
+  assert.ok(decide({ risk: "medium", action: "warn" }, "text", { allowOverride: false }).choices.includes("original"));
 });
 
 test("worst file wins", () => {

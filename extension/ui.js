@@ -1,4 +1,4 @@
-// In-page UI: the decision dialog and the typing warning bar, inside a closed shadow root so the
+// In-page UI: the decision dialog and the "checking" popup, inside a closed shadow root so the
 // site's CSS cannot change them and the site's scripts cannot read them.
 "use strict";
 
@@ -20,11 +20,18 @@
     button { font: inherit; border-radius: 8px; padding: 7px 14px; border: 1px solid #d0d5dd; background: #fff; cursor: pointer; }
     button.primary { background: var(--c); border-color: var(--c); color: #fff; }
     .report { margin-right: auto; border: 0; background: none; color: #667085; text-decoration: underline; padding: 7px 0; }
-    .bar { position: fixed; right: 16px; bottom: 16px; z-index: 2147483646; background: #fff; color: #1d2433;
-           border-left: 4px solid var(--c); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18);
-           padding: 8px 12px; font: 13px system-ui, sans-serif; max-width: 360px; }
+    .wait { position: fixed; inset: 0; background: rgba(15,18,22,.25); z-index: 2147483647;
+            display: flex; align-items: center; justify-content: center; }
+    .busy { display: flex; gap: 10px; align-items: center; background: #fff; color: #1d2433; border-radius: 12px;
+            padding: 14px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.25); font: 14px system-ui, sans-serif;
+            max-width: min(420px, calc(100vw - 32px)); }
+    .spin { width: 14px; height: 14px; flex: none; border-radius: 50%; border: 2px solid #c9d3e6;
+            border-top-color: #2f5bd3; animation: spin .8s linear infinite; }
+    .secs { color: #667085; font-variant-numeric: tabular-nums; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
     @media (prefers-color-scheme: dark) {
-      .box, .bar { background: #1b2027; color: #e6e9ee; } p, code { color: #a9b1bd; }
+      .box, .busy { background: #1b2027; color: #e6e9ee; } .spin { border-color: #3a4350; border-top-color: #7aa2ff; } p, code { color: #a9b1bd; }
       li { border-color: #2a313b; } button { background: #232a33; color: #e6e9ee; border-color: #3a4350; }
     }`;
   const LABELS = { original: { text: "Paste anyway", file: "Upload anyway", submit: "Send anyway" },
@@ -85,22 +92,41 @@
     });
   }
 
-  let bar = null;
-  /** Non-blocking warning for typed text; null hides it. */
-  function warnBar(assessment, labels) {
-    if (!assessment || assessment.risk === "none" || assessment.action === "allow") {
-      if (bar) { bar.host.remove(); bar = null; }
-      return;
-    }
-    if (!bar) bar = mount();
-    const c = COLORS[assessment.risk];
-    bar.root.querySelector(".bar")?.remove();
-    const div = document.createElement("div");
-    div.className = "bar";
-    div.style.setProperty("--c", c);
-    div.innerHTML = `<b style="color:${c}">⚠ ${esc(assessment.risk)}</b> data in your message: ${esc(labels.join(", "))}`;
-    bar.root.appendChild(div);
+  /**
+   * "Checking ..." popup while the engine works, so a held paste, send or upload does not look stuck.
+   * Shown only if the check takes longer than DELAY_MS; returns {update(text), done()}.
+   */
+  const DELAY_MS = 150;
+  function busy(text) {
+    let ui = null;
+    let label = text;
+    const t0 = Date.now();
+    const render = () => {
+      if (!ui) return;
+      const s = Math.floor((Date.now() - t0) / 1000);
+      ui.msg.textContent = label;
+      ui.secs.textContent = s >= 2 ? `${s}s` : "";
+    };
+    const show = setTimeout(() => {
+      ui = mount();
+      const wrap = document.createElement("div");
+      wrap.className = "wait";
+      wrap.innerHTML = `<div class="busy" role="status"><span class="spin"></span><span class="msg"></span><span class="secs"></span></div>`;
+      ui.root.appendChild(wrap);
+      const div = wrap.firstElementChild;
+      ui.msg = div.querySelector(".msg");
+      ui.secs = div.querySelector(".secs");
+      ui.tick = setInterval(render, 1000);
+      render();
+    }, DELAY_MS);
+    return {
+      update(t) { label = t; render(); },
+      done() {
+        clearTimeout(show);
+        if (ui) { clearInterval(ui.tick); ui.host.remove(); ui = null; }
+      },
+    };
   }
 
-  self.SDDUI = { ask, warnBar };
+  self.SDDUI = { ask, busy };
 })();

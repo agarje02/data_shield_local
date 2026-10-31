@@ -1,0 +1,142 @@
+{
+ "levels": {
+  "critical": {
+   "score": 4,
+   "action": "block"
+  },
+  "high": {
+   "score": 3,
+   "action": "mask"
+  },
+  "medium": {
+   "score": 2,
+   "action": "warn"
+  },
+  "low": {
+   "score": 1,
+   "action": "allow"
+  }
+ },
+ "labels": {
+  "CVV": "critical",
+  "OTP_PIN": "critical",
+  "PASSWORD": "critical",
+  "PRIVATE_KEY": "critical",
+  "CONNECTION_STRING": "critical",
+  "API_KEY": "critical",
+  "AUTH_TOKEN": "critical",
+  "CREDIT_CARD": "high",
+  "CARD_EXPIRY": "high",
+  "BANK_ACCOUNT": "high",
+  "AADHAAR": "high",
+  "PAN": "high",
+  "UPI_ID": "high",
+  "PHONE": "medium",
+  "EMAIL": "medium",
+  "ADDRESS": "medium",
+  "DATE_OF_BIRTH": "medium",
+  "USERNAME": "medium",
+  "PERSON": "low",
+  "IP_ADDRESS": "low"
+ },
+ "default": "medium",
+ "negative_context": {
+  "CARD_EXPIRY": [
+   "best before",
+   "use by",
+   "mfg",
+   "manufactured",
+   "packed on",
+   "warranty till",
+   "offer valid"
+  ],
+  "OTP_PIN": [
+   "ext",
+   "extension",
+   "intercom",
+   "room",
+   "flight",
+   "pin code",
+   "pincode",
+   "postal code",
+   "port"
+  ],
+  "CVV": [
+   "ext",
+   "extension",
+   "room",
+   "flight",
+   "error",
+   "status",
+   "http",
+   "port"
+  ]
+ },
+ "combos": [
+  {
+   "name": "card_kit",
+   "all": [
+    "CREDIT_CARD"
+   ],
+   "any": [
+    [
+     "CVV",
+     "CARD_EXPIRY"
+    ]
+   ],
+   "level": "critical",
+   "reason": "card number with expiry or CVV is enough to make a payment"
+  },
+  {
+   "name": "identity_kit",
+   "all": [
+    "PERSON"
+   ],
+   "any": [
+    [
+     "AADHAAR",
+     "PAN"
+    ],
+    [
+     "DATE_OF_BIRTH",
+     "ADDRESS",
+     "PHONE"
+    ]
+   ],
+   "level": "critical",
+   "reason": "name + government ID + personal details is enough to impersonate someone"
+  },
+  {
+   "name": "login",
+   "all": [
+    "PASSWORD"
+   ],
+   "any": [
+    [
+     "USERNAME",
+     "EMAIL"
+    ]
+   ],
+   "level": "critical",
+   "reason": "username or email with its password gives account access"
+  },
+  {
+   "name": "upi_payment",
+   "all": [
+    "UPI_ID",
+    "OTP_PIN"
+   ],
+   "level": "critical",
+   "reason": "UPI ID with an OTP or PIN can authorise a payment"
+  },
+  {
+   "name": "bank_details",
+   "all": [
+    "BANK_ACCOUNT",
+    "PERSON"
+   ],
+   "level": "high",
+   "reason": "account number with the holder's name"
+  }
+ ]
+}

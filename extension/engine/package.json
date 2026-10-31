@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "In-browser detector: tokenizer, decoding, rules and policy (ported from datashield_local/). Node reads this file only to treat these .js files as ES modules; Chrome ignores it."
+}

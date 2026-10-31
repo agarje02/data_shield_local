@@ -1,0 +1,24 @@
+{
+ "name": "datashield-local-v2.3 (4-bit, browser)",
+ "repo": "aniketClaude/datashield-local-v2.3",
+ "revision": "e6429072dad6cd3147bd04566997b6278d659dfb",
+ "folder": "web",
+ "files": {
+  "model.onnx": {
+   "sha256": "01e5ed93d4c77b6a2d389ad901e159e707ce7787588a88d87c2ec4ee46bd04b0",
+   "size": 211467325
+  },
+  "tokenizer.json": {
+   "sha256": "6e071433b53f3d8900c5753325e27d698ececb778454ea7f413e46183e77f5b5",
+   "size": 8340031
+  },
+  "config.json": {
+   "sha256": "ad280468bd94e1a1c4e72a24bc29fa7f50c492c9e80a0d14dcc81bbef7c050ae",
+   "size": 2832
+  },
+  "thresholds.json": {
+   "sha256": "6b98bf16de0d09b6a9a9e0e878fcf205998d0c1f98ed78802c5f79549679a592",
+   "size": 410
+  }
+ }
+}

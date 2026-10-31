@@ -102,14 +102,46 @@ nothing sent). Still to try: ChatGPT, Claude, Copilot, Gmail.
 - **Check:** Playwright tests with the unpacked extension on a local test page; manual run on each
   target site.
 
-### Publish kit (prepared locally 2026-10-30; nothing uploaded)
-Built: runtime moved into the `datashield_local/` package (root `common.py`, `policy.py`, ... are aliases so
-training scripts are unchanged), `pyproject.toml` (wheel = `datashield_local/` only, `datashield-local` command),
-`datashield-local download-model` (Hugging Face, SHA256SUMS-verified), `publish/prepare_model.py` →
-`publish/hf_model/` (745 MB, verified), model card, Hugging Face Space demo (`publish/hf_space/`),
-new README (training docs → docs/TRAINING.md). Wheel installed in isolation works end to end.
-Blocked on: a product name (PyPI `datashield-local` and `datashield-local` are taken), HF / GitHub
-accounts, LICENSE file, and the user's go-ahead to upload.
+### Publish kit — DONE 2026-10-30
+Product name **DataShield Local**: code on GitHub (agarje02/data_shield_local, Apache-2.0), model on
+Hugging Face (aniketClaude/datashield-local-v2.3, default for `datashield-local download-model`),
+static product page with screenshots (spaces/aniketClaude/datashield-local; Gradio Spaces need HF
+PRO). Not on PyPI yet: the README installs from GitHub.
+
+### M3b. Standalone extension: the model runs in the browser (next; M4 waits)
+Goal: install the extension and it works, no Python, no engine. The engine stays optional (desktop
+files, M4) and the extension uses it when it is running.
+
+**Model.** `quantize_onnx.py --mode q4`: 4-bit weight-only linear layers (MatMulNBits, blocks of
+32) + int8 embedding table. 211 MB (fp32 736 MB). On 400 v2.3 test docs: F1 0.974 = fp32 0.974,
+clean false alarms 27 vs 43 per 1k docs. Downloaded from Hugging Face on first run (not in the
+extension package), SHA-256 checked, kept in the extension's own storage.
+
+**Runtime.** onnxruntime-web (WASM, SIMD; threads when the page is cross-origin isolated; WebGPU
+later) in an offscreen document that Chrome keeps while it is used and that is closed after a few
+idle minutes to give the memory back. All libraries are bundled (MV3 forbids remote code).
+
+**Ported to JavaScript, each with a parity test against the Python on the same documents:**
+1. Tokenizer: DeBERTa-v3 SentencePiece (Unigram) from `tokenizer.json`, with character offsets.
+2. Decoding: 512-token windows with stride 128, word voting, thresholds, trimming, user:pass split.
+3. Rules: checksums (Verhoeff, Luhn, IBAN), validators, rescue patterns.
+4. Policy: severities, combos, negative context, masking.
+
+**Settings page** (answers "how does a user choose what to block"):
+- per label: Block / Mask / Warn / Allow (defaults from `policy.yaml`);
+- whether a block can be overridden ("Send / Paste / Upload anyway");
+- protected sites: the built-in list plus the user's own, on/off per site;
+- detection: built-in model / local engine when running.
+
+**Files in the browser.** Text, code, CSV, JSON, logs directly; DOCX / XLSX via the browser's own
+unzip (DecompressionStream); PDF with a bundled pdf.js; zip archives one level deep.
+
+**UX.** First-run page with download progress; "Checking…" indicator on held paste / send / upload;
+popup shows model status, recent events and a pause switch.
+
+**Check:** parity tests pass (same tokens, spans and decisions as Python on 300 test docs);
+paste / send / upload flows on the demo page and on ChatGPT, Claude, Gemini, Copilot and Gmail
+without the engine; memory and time per message measured; Chrome Web Store package builds.
 
 ### M4. Endpoint agent MVP
 - Tray icon (status, pause, open app).

@@ -1,0 +1,14 @@
+{
+  "name": "datashield-local-extension",
+  "private": true,
+  "description": "Development tooling for the extension: pinned onnxruntime-web and pdf.js, copied into vendor/ by `npm run vendor`.",
+  "scripts": {
+    "vendor": "node extension/tools/vendor.mjs",
+    "test": "node --test extension/decide.test.js extension/engine/parity.test.js extension/engine/extract.test.js",
+    "test:runtime": "node --test extension/engine/runtime.test.js"
+  },
+  "devDependencies": {
+    "onnxruntime-web": "1.30.0",
+    "pdfjs-dist": "5.7.284"
+  }
+}

@@ -21,11 +21,20 @@
   const TYPING_DELAY = 1500;
   const host = location.hostname;
   let disabled = false;
+  let pausedUntil = 0;                   // "pause protection" from the popup: everything allowed until then
+  const off = () => disabled || Date.now() < pausedUntil;
   let bypass = false;                    // true while we replay an approved send
   let lastEditable = null;               // the composer the user typed in last
   let checking = false;                  // a send check is already showing
-  let offUntil = 0;                      // engine down: step aside (no interception) until then
+  let offUntil = 0;                      // engine down / not set up: step aside (no interception) until then
   const engineOff = () => Date.now() < offUntil;
+  let settings = { allowOverride: true, typingWarnings: true };   // engine/settings.js keeps the rest
+  let warmed = false;                    // built-in model asked to load (on the first focus in a text box)
+  // Chat sites (the built-in list and sites the user added): sends are checked too. Any other site
+  // ("protect all websites"): pastes, drops and uploads only, so Enter keeps its normal meaning.
+  const LISTED = chrome.runtime.getManifest().content_scripts[0].matches
+    .map((m) => m.replace(/^\w+:\/\//, "").replace(/[:/].*$/, ""));
+  let chatSite = LISTED.includes(host);
 
   // ---------------------------------------------------------------- lifecycle
   // After the extension is reloaded or updated, this copy is orphaned (chrome.runtime.id is gone).
@@ -44,12 +53,24 @@
     document.addEventListener(type, wrapped, true);
   }
 
-  chrome.storage.local.get({ disabledSites: [] }).then(({ disabledSites }) => {
-    disabled = D.siteDisabled(host, disabledSites);
+  const applySettings = (st) => {
+    settings = { ...settings, ...st };
+    chatSite = LISTED.includes(host) || (settings.customSites || []).includes(host);
+  };
+  chrome.storage.local.get({ disabledSites: [], settings: {}, pausedUntil: 0 }).then((st) => {
+    disabled = D.siteDisabled(host, st.disabledSites);
+    pausedUntil = st.pausedUntil;
+    applySettings(st.settings);
   }).catch(() => {});
   chrome.storage.onChanged.addListener((ch) => {
     if (ch.disabledSites) disabled = D.siteDisabled(host, ch.disabledSites.newValue);
+    if (ch.pausedUntil) pausedUntil = ch.pausedUntil.newValue || 0;
+    if (ch.settings) {
+      applySettings(ch.settings.newValue);
+      offUntil = 0;                      // mode or model changed: ask again
+    }
   });
+  const decide = (a, kind) => D.decide(a, kind, { allowOverride: settings.allowOverride !== false });
 
   // sendMessage throws synchronously (not a rejected promise) once the extension was reloaded
   const send = (msg) => {
@@ -71,7 +92,7 @@
     if (!(el instanceof Element)) return null;
     const t = el.closest("textarea, input, [contenteditable=''], [contenteditable='true'], [contenteditable='plaintext-only']");
     if (!t) return null;
-    if (t.tagName === "INPUT" && !/^(text|search|email|url|tel|password|)$/.test(t.type)) return null;
+    if (t.tagName === "INPUT" && !/^(text|search|email|url|tel|)$/.test(t.type)) return null;   // not password: logging in is fine
     return t;
   }
 
@@ -116,14 +137,21 @@
 
   on("focusin", (e) => {
     const t = editable(e.composedPath()[0]);
-    if (t) lastEditable = t;
+    if (!t) return;
+    lastEditable = t;
+    if (!warmed && !off()) {          // built-in model: load it while the user is still typing
+      warmed = true;
+      send({ type: "warmup" });
+    }
   });
 
   // ---------------------------------------------------------------- paste / text drop
 
   async function checkText(t, text, event) {
     const sel = saveSel(t);
-    const res = await engine("scan", { text, source: `browser-${event}`, context: { url: location.href, event } });
+    const spinner = UI.busy(`Checking ${event === "drop" ? "dropped text" : "paste"} for sensitive data…`);
+    const res = await engine("scan", { text, source: `browser-${event}`, context: { url: location.href, event } })
+      .finally(() => spinner.done());
     if (!res || !res.ok) {                       // fail-open: never lose the user's paste
       insert(t, sel, text);
       log({ kind: event, risk: "unknown", decision: "allowed (engine not reachable)" });
@@ -131,7 +159,7 @@
     }
     const r = res.result;
     const a = r.assessment;
-    const d = D.decide(a, "text");
+    const d = decide(a, "text");
     if (d.mode === "allow") {
       insert(t, sel, text);
       if (a.risk !== "none") log({ kind: event, risk: a.risk, labels: labelsOf(a), decision: "allowed" });
@@ -157,7 +185,7 @@
   });
 
   on("paste", (e) => {
-    if (disabled || bypass || engineOff() || REPLAY.has(e)) return;
+    if (off() || bypass || engineOff() || REPLAY.has(e)) return;
     const t = editable(e.composedPath()[0]);
     const text = e.clipboardData ? e.clipboardData.getData("text/plain") : "";
     if (!t || text.trim().length < 4) return;
@@ -184,14 +212,16 @@
     if (!text || text.trim().length < 4) return replay();
     checking = true;
     try {
-      const res = await engine("scan", { text, source: "browser-submit", context: { url: location.href, event: "submit" } });
+      const spinner = UI.busy("Checking your message before sending…");
+      const res = await engine("scan", { text, source: "browser-submit", context: { url: location.href, event: "submit" } })
+        .finally(() => spinner.done());
       if (!res || !res.ok) {
         log({ kind: "send", risk: "unknown", decision: "allowed (engine not reachable)" });
         return replay();
       }
       const r = res.result;
       const a = r.assessment;
-      const d = D.decide(a, "submit");
+      const d = decide(a, "submit");
       if (d.mode === "allow") return replay();
       const choice = await UI.ask({ kind: "submit", mode: d.mode, choices: d.choices, assessment: a, items: itemsOf(a, text) });
       log({ kind: "send", risk: a.risk, labels: labelsOf(a), decision: choice });
@@ -225,7 +255,7 @@
   }
 
   on("keydown", (e) => {
-    if (disabled || bypass || engineOff() || REPLAY.has(e) || !D.isSubmitKey(e, host)) return;
+    if (!chatSite || off() || bypass || engineOff() || REPLAY.has(e) || !D.isSubmitKey(e, host)) return;
     const t = editable(e.composedPath()[0]);
     if (!t || t.tagName === "INPUT") return;      // single-line inputs: search boxes, subjects
     e.preventDefault();
@@ -236,7 +266,7 @@
   });
 
   on("click", (e) => {
-    if (disabled || bypass || checking || engineOff()) return;
+    if (!chatSite || off() || bypass || checking || engineOff()) return;
     const btn = e.composedPath()[0] instanceof Element ? e.composedPath()[0].closest("button, [role=button]") : null;
     if (!btn || !isSend(btn)) return;
     const t = lastEditable && lastEditable.isConnected ? lastEditable : editable(document.activeElement);
@@ -260,18 +290,24 @@
   /** true = let the upload go ahead */
   async function checkFiles(files, event) {
     const results = [];
-    for (const f of files) {
-      if (f.size > MAX_FILE) continue;          // too big to check here: not blocked (fail-open)
-      const res = await engine("upload", { name: f.name, data_b64: await readB64(f), source: `browser-${event}`,
-                                           context: { url: location.href, event } });
-      if (!res || !res.ok) {
-        log({ kind: event, risk: "unknown", decision: "allowed (engine not reachable)" });
-        return true;
+    const spinner = UI.busy("Checking file for sensitive data…");
+    try {
+      for (const [i, f] of files.entries()) {
+        if (f.size > MAX_FILE) continue;        // too big to check here: not blocked (fail-open)
+        spinner.update(`Checking ${files.length > 1 ? `file ${i + 1} of ${files.length}: ` : ""}${f.name}…`);
+        const res = await engine("upload", { name: f.name, data_b64: await readB64(f), source: `browser-${event}`,
+                                             context: { url: location.href, event } });
+        if (!res || !res.ok) {
+          log({ kind: event, risk: "unknown", decision: "allowed (engine not reachable)" });
+          return true;
+        }
+        results.push({ file: f.name, ...res.result });
       }
-      results.push({ file: f.name, ...res.result });
+    } finally {
+      spinner.done();
     }
     const worst = D.worst(results);
-    const d = D.decide(worst, "file");
+    const d = decide(worst, "file");
     if (d.mode === "allow") return true;
     const items = results.flatMap((r) => r.findings.map((x) => ({
       label: x.label, severity: x.severity, preview: x.preview,
@@ -286,7 +322,7 @@
   const held = new WeakMap();                    // input element -> promise of the verdict
   function onFileEvent(e) {
     const input = e.composedPath()[0];
-    if (disabled || engineOff() || REPLAY.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file") return;
+    if (off() || engineOff() || REPLAY.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file") return;
     if (!input.files || !input.files.length) return;
     e.stopImmediatePropagation();
     if (held.has(input)) return;                 // the twin event (input + change) of the same pick
@@ -308,7 +344,7 @@
   on("change", onFileEvent);
 
   on("drop", (e) => {
-    if (disabled || engineOff() || REPLAY.has(e) || !e.dataTransfer) return;
+    if (off() || engineOff() || REPLAY.has(e) || !e.dataTransfer) return;
     const files = [...(e.dataTransfer.files || [])];
     const target = e.composedPath()[0];
     if (files.length) {
@@ -335,24 +371,29 @@
   });
 
   // ---------------------------------------------------------------- typing (warn only)
+  // No in-page note: the count shows on the toolbar icon for this tab, the popup comes on send.
 
   let typingTimer = null;
   let lastTyped = "";
+  const typingBadge = (a) => send({ type: "typing", risk: a ? a.risk : "none", count: a ? a.findings.length : 0 });
   on("input", (e) => {
-    if (disabled || REPLAY.has(e)) return;
+    if (off() || !chatSite || REPLAY.has(e)) return;
     const t = editable(e.composedPath()[0]);
     if (!t) return;
     lastEditable = t;
-    if (engineOff()) return;
+    if (engineOff() || settings.typingWarnings === false) return;
     clearTimeout(typingTimer);
     typingTimer = setTimeout(async () => {
       const text = textOf(t);
       if (text === lastTyped) return;
       lastTyped = text;
-      if (text.trim().length < 12) return UI.warnBar(null);
+      if (text.trim().length < 12) return typingBadge(null);
       const res = await engine("scan", { text, source: "browser-typing", audit: "findings",
                                          context: { url: location.href, event: "typing" } });
-      if (res && res.ok) UI.warnBar(res.result.assessment, labelsOf(res.result.assessment));
+      if (res && res.ok) {
+        const a = res.result.assessment;
+        typingBadge(a.risk === "none" || a.action === "allow" ? null : a);
+      }
     }, TYPING_DELAY);
   });
 })();

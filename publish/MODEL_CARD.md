@@ -38,6 +38,13 @@ Files: `model.onnx` (fp32, opset 17, inputs `input_ids` + `attention_mask`, outp
 `tokenizer.json`, `config.json` (`id2label`, BIO tags), `thresholds.json` (per-label minimum
 scores tuned on validation), `labels.yaml`, `SHA256SUMS`.
 
+### Browser copy (`web/`)
+`web/model.onnx` is the same model for the browser extension, 211 MB: 4-bit weight-only linear
+layers (MatMulNBits, blocks of 32) and an int8 embedding table. It runs in onnxruntime-web (WASM)
+and scores the same as fp32 on 400 v2.3 test documents (F1 0.974 both; clean false alarms 27 vs
+43 per 1,000). With the extension's JavaScript decoding it returns exactly the spans of the Python
+engine on 322 test texts. The extension pins the files by SHA-256 (`web/SHA256SUMS`).
+
 ## Results
 
 Synthetic, template-disjoint test sets (wording held out from training), model + checksum rules:

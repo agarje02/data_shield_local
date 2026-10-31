@@ -16,3 +16,6 @@ build/
 data/v*/
 *.zip
 *.log
+extension/engine/fixtures/
+extension/vendor/
+node_modules/

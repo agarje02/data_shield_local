@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataShield Local settings</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1><span class="logo" aria-hidden="true">🛡</span> DataShield Local</h1>
+    <p class="lede">Stops card numbers, IDs, passwords and other sensitive data from being pasted, sent or
+      uploaded to AI tools and webmail. Every check runs on this device; nothing you type is sent anywhere.</p>
+  </header>
+
+  <div id="welcome" class="notice" hidden>
+    <b>Welcome.</b> Choose how DataShield should check your text below. Until then nothing is checked.
+  </div>
+
+  <section aria-labelledby="h-mode">
+    <h2 id="h-mode">Detection</h2>
+    <p class="sub">Pick one. You can switch at any time.</p>
+    <div class="modes">
+      <label class="mode" id="card-builtin">
+        <input type="radio" name="mode" value="builtin">
+        <span class="mode-body">
+          <span class="mode-title">Built-in model <span class="tag">Recommended</span></span>
+          <span class="mode-text">Works on its own. Downloads the detection model once
+            (<span id="model-size">211 MB</span>) and keeps it in the browser.</span>
+          <span class="status" id="builtin-status"></span>
+          <span class="progress" id="progress" hidden><span id="bar"></span></span>
+          <span class="mode-actions">
+            <button type="button" id="download" hidden>Download model</button>
+            <button type="button" id="remove" class="link" hidden>Remove model</button>
+          </span>
+        </span>
+      </label>
+      <label class="mode" id="card-engine">
+        <input type="radio" name="mode" value="engine">
+        <span class="mode-body">
+          <span class="mode-title">Desktop engine</span>
+          <span class="mode-text">Uses the DataShield Local app on this computer (larger model, also scans
+            files and folders on disk). Needs the app installed and running.</span>
+          <span class="status" id="engine-status"></span>
+          <span class="mode-actions">
+            <button type="button" id="engine-test">Check connection</button>
+            <a href="https://github.com/agarje02/data_shield_local#quick-start" target="_blank" rel="noopener">How to install the app</a>
+          </span>
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-labels">
+    <h2 id="h-labels">What to do with each kind of data</h2>
+    <p class="sub"><b>Block</b> stops it, <b>Mask</b> offers to replace it with a placeholder like
+      <code>[CREDIT_CARD]</code>, <b>Warn</b> asks first, <b>Allow</b> lets it through.</p>
+    <div id="labels" class="labels"></div>
+    <button type="button" id="reset-labels" class="link">Reset to defaults</button>
+  </section>
+
+  <section aria-labelledby="h-blocks">
+    <h2 id="h-blocks">Checks</h2>
+    <label class="check"><input type="checkbox" id="allow-override">
+      <span><b>Let people go ahead after a block</b><br><span class="sub">Shows "Send anyway", "Paste anyway" and
+        "Upload anyway" on blocked items. Turn off to make blocks final.</span></span></label>
+    <label class="check"><input type="checkbox" id="typing">
+      <span><b>Warn while typing</b><br><span class="sub">The DataShield icon in the toolbar shows how many sensitive
+        items a draft holds, before it is sent. Nothing is added to the page.</span></span></label>
+  </section>
+
+  <section aria-labelledby="h-sites">
+    <h2 id="h-sites">Sites</h2>
+    <label class="check"><input type="checkbox" id="all-sites">
+      <span><b>Protect all websites</b><br><span class="sub">Also checks pastes, dropped text and file uploads on every
+        other website (forms, support chats, document tools). The browser asks once for access to all sites;
+        nothing leaves this device. Sending with Enter is only checked on the sites below.</span></span></label>
+    <p class="sub" id="all-sites-msg" role="status"></p>
+    <p class="sub">DataShield fully checks these sites (pastes, uploads and sends). Switch one off to stop checking there.</p>
+    <ul id="sites" class="sites"></ul>
+    <form id="add-site" class="add-site">
+      <input id="site-input" type="text" inputmode="url" placeholder="Add a site, e.g. chat.deepseek.com" aria-label="Site to add">
+      <button type="submit">Add site</button>
+    </form>
+    <p class="sub" id="site-msg" role="status"></p>
+  </section>
+
+  <footer>
+    DataShield Local · <a href="https://github.com/agarje02/data_shield_local" target="_blank" rel="noopener">GitHub</a> ·
+    <span id="version"></span>
+  </footer>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>

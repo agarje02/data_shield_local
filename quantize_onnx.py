@@ -4,6 +4,9 @@
          run time. ~4x smaller, made for CPU.
   fp16 - weights and math in float16 (inputs/outputs stay int64/float32).
          ~2x smaller; fast on GPU, CPU support depends on onnxruntime.
+  q4   - 4-bit weight-only linear layers (MatMulNBits, blocks of 32; activations stay fp32, so
+         the FFN-output outliers that break int8 do not matter) plus an int8 embedding table.
+         Smallest; runs in onnxruntime-web (WASM / WebGPU) for the browser extension.
 
 Writes <out>/ with model.onnx plus the tokenizer/config/labels/thresholds files
 copied from the source, so Predictor, evaluate.py and the app use it unchanged.
@@ -31,7 +34,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", required=True, help="folder with the fp32 model.onnx")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--mode", choices=["int8", "fp16"], required=True)
+    ap.add_argument("--mode", choices=["int8", "fp16", "q4"], required=True)
+    ap.add_argument("--block-size", type=int, default=32, help="q4: weights per quantization block")
     args = ap.parse_args()
 
     src, out = Path(args.src), Path(args.out)
@@ -57,6 +61,22 @@ def main():
         del graph
         quantize_dynamic(str(src / "model.onnx"), str(dst), weight_type=QuantType.QInt8,
                          nodes_to_quantize=nodes)
+    elif args.mode == "q4":
+        import onnx
+        from onnxruntime.quantization import QuantType, quantize_dynamic
+        from onnxruntime.quantization.matmul_nbits_quantizer import MatMulNBitsQuantizer
+        graph = onnx.load(str(src / "model.onnx"), load_external_data=False).graph
+        weights = {i.name for i in graph.initializer}
+        gathers = [n.name for n in graph.node if n.op_type == "Gather" and n.input[0] in weights]
+        del graph
+        tmp = out / "model.gather_int8.onnx"
+        quantize_dynamic(str(src / "model.onnx"), str(tmp), weight_type=QuantType.QInt8, nodes_to_quantize=gathers)
+        q = MatMulNBitsQuantizer(onnx.load(str(tmp)), bits=4, block_size=args.block_size, is_symmetric=True,
+                                 op_types_to_quantize=("MatMul",))
+        q.process()
+        q.model.save_model_to_file(str(dst), use_external_data_format=False)
+        del q
+        tmp.unlink()
     else:
         import onnx
         # onnxruntime's converter; onnxconverter_common's leaves Cast nodes typed fp32

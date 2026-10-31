@@ -19,7 +19,8 @@ mail.google.com, plus the local test page http://127.0.0.1:8765/ext-test.
 | Paste / text drop | held, scanned, then inserted as is, inserted masked (`[CREDIT_CARD]`), or dropped, by policy |
 | File pick / file drop | held, scanned (PDF, Office, zip, ...), then passed to the site unchanged, or cleared |
 | Sending (Enter, Ctrl/Cmd+Enter, Send button) | the message is checked first; if sensitive, a heads-up: **Send anyway**, **Send masked**, **Edit message** (critical → Edit is the default). Clean messages send at once. In Gmail plain Enter is a new line, so only Ctrl+Enter and the Send button are checked |
-| Typing | after a 1.5 s pause, a warning bar if the message contains sensitive data |
+| Typing | after a 1.5 s pause, the number of sensitive items on the toolbar icon (nothing is added to the page) |
+| Other websites | off by default; "Protect all websites" in settings checks pastes, drops and uploads everywhere (not Enter/send) |
 | Engine not running | everything allowed, red `!` badge on the extension icon (fail-open) |
 
 Policy actions (`configs/policy.yaml`): **block** → only "paste masked" or cancel; **mask** → masked
@@ -30,8 +31,11 @@ Popup: engine status, protect this site on/off, last events (labels and decision
 
 ## Files
 - `background.js`: the only part that talks to the engine (native messaging, one persistent port)
-- `content.js`: event interception on the protected sites; `ui.js`: dialog and warning bar (closed shadow DOM)
+- `content.js`: event interception on the protected sites; `ui.js`: decision dialog and "checking" popup (closed shadow DOM)
 - `decide.js`: pure decision logic (`node --test extension/decide.test.js`)
+
+## Download zip
+`python publish/build_extension_zip.py` → `dist/datashield-local-extension-v<version>.zip` (no tests, no local test page).
 
 ## Updating
 After an update or reload the extension adds itself to already-open protected tabs; an older copy left

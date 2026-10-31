@@ -4,16 +4,17 @@
 (function (root) {
   const RANK = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
 
-  // What the user may do for each policy action, first = default button.
+  // What the user may do for each policy action, first = default button. A heads-up for now: the
+  // user can always go ahead, but on block the safe choice is the default and "anyway" comes last.
   const CHOICES = {
     text: {
-      block: ["masked", "cancel"],            // original is never pasted
+      block: ["masked", "cancel", "original"],
       mask: ["masked", "original", "cancel"],
       warn: ["original", "masked", "cancel"],
     },
     file: {
-      block: ["cancel"],
-      mask: ["cancel", "original"],           // a file cannot be masked: default is to not upload
+      block: ["cancel", "original"],          // a file cannot be masked: default is to not upload
+      mask: ["cancel", "original"],
       warn: ["original", "cancel"],
     },
     // sending a typed message: a heads-up, the user may always proceed; critical -> edit is the default
@@ -24,11 +25,16 @@
     },
   };
 
-  /** assessment from the engine -> {mode, choices}; mode "allow" means go ahead silently. */
-  function decide(assessment, kind = "text") {
+  /**
+   * assessment -> {mode, choices}; mode "allow" means go ahead silently.
+   * allowOverride false (settings): a block offers no "... anyway".
+   */
+  function decide(assessment, kind = "text", { allowOverride = true } = {}) {
     const action = assessment && assessment.risk !== "none" ? assessment.action : "allow";
     if (!CHOICES[kind][action]) return { mode: "allow", choices: [] };
-    return { mode: action, choices: CHOICES[kind][action] };
+    const choices = action === "block" && !allowOverride
+      ? CHOICES[kind][action].filter((c) => c !== "original") : CHOICES[kind][action];
+    return { mode: action, choices };
   }
 
   /** The strictest of several file results (one upload can carry many files). */

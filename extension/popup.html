@@ -16,14 +16,35 @@
   li { padding: 5px 0; border-bottom: 1px solid var(--line); }
   .risk { font-weight: 700; text-transform: uppercase; font-size: 10px; }
   a { color: inherit; }
+  .stats { display: flex; gap: 8px; }
+  .stat { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .pause { display: flex; gap: 6px; margin-top: 6px; }
+  button { font: inherit; font-size: 12px; border-radius: 6px; padding: 4px 8px; border: 1px solid var(--line);
+           background: transparent; color: inherit; cursor: pointer; }
+  button.link { border: 0; padding: 0; text-decoration: underline; color: var(--muted); }
+  .warn { color: var(--bad); }
 </style>
 </head>
 <body>
   <header>DataShield Local</header>
-  <section class="row"><span><span id="dot" class="dot"></span><span id="status">checking engine…</span></span>
-    <a id="open" href="#" class="muted">review app</a></section>
-  <section class="row"><span>Protect <b id="site">this site</b></span><input id="toggle" type="checkbox" checked></section>
-  <section><div class="muted">Recent (labels only, no values)</div><ul id="events"><li class="muted">nothing yet</li></ul></section>
-  <script src="popup.js"></script>
+  <section class="row"><span><span id="dot" class="dot"></span><span id="status">checking…</span></span>
+    <a id="settings" href="#" class="muted">settings</a></section>
+  <section>
+    <div class="row"><span>Protect <b id="site">this site</b></span><input id="toggle" type="checkbox" checked></div>
+    <div id="not-covered" class="muted" hidden>Not checked here. <a id="all-sites" href="#">Protect all websites</a></div>
+  </section>
+  <section>
+    <div class="row"><span id="pause-state">Protection is on</span><button id="resume" hidden>Resume now</button></div>
+    <div class="pause" id="pause-btns"><span class="muted">Pause:</span>
+      <button data-min="15">15 min</button><button data-min="60">1 hour</button><button data-min="480">8 hours</button></div>
+  </section>
+  <section class="stats">
+    <div class="stat"><b id="found">0</b><span class="muted">sensitive items found</span></div>
+    <div class="stat"><b id="kept">0</b><span class="muted">kept private (masked or not sent)</span></div>
+  </section>
+  <section><div class="row"><span class="muted">Recent (labels only, no values)</span><button id="clear" class="link">clear</button></div>
+    <ul id="events"><li class="muted">nothing yet</li></ul></section>
+  <script type="module" src="popup.js"></script>
 </body>
 </html>
